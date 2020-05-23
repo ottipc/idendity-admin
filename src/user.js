@@ -37,7 +37,6 @@ export const UserEdit = props => (
             <TextInput source="name" />
             <BooleanInput source="activated" />
             <RoleListBox user_id="1"/>
-            <UserRightBox/>
         </SimpleForm>
     </Edit>
 

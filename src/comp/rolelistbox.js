@@ -1,8 +1,10 @@
-import React  from 'react';
+import React from 'react';
 import DualListBox from 'react-dual-listbox';
 import 'react-dual-listbox/lib/react-dual-listbox.css';
 import dataProvider from '../api/dataProvider';
-import { useDataProvider, useNotify, useRedirect, Button } from 'react-admin';
+import {UserRightBox} from "./userrightlistbox";
+import {SimpleForm} from "react-admin";
+
 const options = [{
     value: 'one',
     label: 'Option One'
@@ -21,8 +23,8 @@ export class RoleListBox extends React.Component {
 
     constructor(props) {
         super(props);
-        console.log("****************** PROPERTIE **************************");
-        console.log(props.record);
+        console.log("*** CONSTRUCT ROLE LIST BOX ***");
+
         // Don't call this.setState() here!
         this.state = {
             allrolesrow: [],
@@ -39,6 +41,7 @@ export class RoleListBox extends React.Component {
 
 
     componentDidMount() {
+        console.log("*** ROLE LIST BOX DID MOUNT ***");
         this.setAllRolesToState();
         this.getUserRolesToState();
 
@@ -47,10 +50,26 @@ export class RoleListBox extends React.Component {
     // send HTTP request to get User Roles
     // save UserRoles to the state
     getUserRolesToState() {
-        console.log("------- Set User Roles ----------------")
         let userroles = [];
         let relations = [];
-        dataProvider.getList('user_role', {
+        this.fetchRoleListForUser().then(response => response)
+            .then(response => {
+                response.data.map(function (val) {
+                    userroles.push(val.role_id);
+                    relations.push(val);
+                });
+                this.setState({
+                    selected: userroles,
+                    initialroles: userroles,
+                    relationobjects: relations
+                })
+            }).catch(err => {
+            console.log(err);
+        });
+    }
+
+    fetchRoleListForUser() {
+        return dataProvider.getList('user_role', {
             pagination: {
                 page: 1,
                 perPage: 50
@@ -62,41 +81,13 @@ export class RoleListBox extends React.Component {
             filter: {
                 user_id: this.props.record.id
             },
-        }).then(response => response)
-            .then(response => {
-                response.data.map(function (val) {
-                    userroles.push(val.role_id);
-                    relations.push(val);
-                });
-                console.log(userroles);
-
-                this.setState({
-                    selected: userroles,
-                    initialroles: userroles,
-                    relationobjects: relations
-                })
-            }).catch(err => {
-            console.log(err);
         });
     }
 
-    // send HTTP request to get All Roles
+// send HTTP request to get All Roles
     // save AllRoles to the state
     setAllRolesToState() {
-        console.log("------- Set All Roles ----------------")
-        dataProvider.getList('role', {
-            pagination: {
-                page: 1,
-                perPage: 20
-            },
-            sort: {
-                field: 'name',
-                order: 'ASC'
-            },
-            filter: {},
-        }).then(response => response)
-            .then(response => {
-                //  console.log(JSON.stringify(response.data));
+        this.fetchAllRoleObjects().then(response => {
                 this.setState({
                     allrolesraw: response.data,
                     allroles: JSON.stringify(response.data)
@@ -107,6 +98,20 @@ export class RoleListBox extends React.Component {
     }
 
 
+    fetchAllRoleObjects() {
+        return dataProvider.getList('role', {
+            pagination: {
+                page: 1,
+                perPage: 20
+            },
+            sort: {
+                field: 'name',
+                order: 'ASC'
+            },
+            filter: {},
+        })
+    }
+
     updateRoles(event) {
         event.preventDefault();
         function createUserRole(payload) {
@@ -114,69 +119,43 @@ export class RoleListBox extends React.Component {
                 .create('user_role', {data: payload})
                 .then(response => {
                     // success side effects go here
-                    console.log(response);
+                    //console.log(response);
                 })
                 .catch(error => {
                     console.log(error);
                 });
         }
 
-
         function deleteUserRole(relationId) {
-
             dataProvider
                 .delete('user_role', {id: relationId})
                 .then(response => {
                     // success side effects go here
-                    console.log(response);
+                    //console.log(response);
                 })
                 .catch(error => {
                     console.log(error);
                 });
         }
 
-        //console.log("------- Update Roles ----------------");
-        //console.log(this.props);
-
-        //console.log(userroles);
-
-
         if (this) {
-            console.log("------- Now we aggregating ----------------");
-            console.log(this.props);
-
             let initials = this.state.initialroles;
             let selected = this.state.selected;
             let currentUserId = this.props.record.id;
             let realtions = this.state.relationobjects;
-            //  console.log("------- Initials ----------------");
-            console.log(initials);
-
-            // console.log("------- Selected ----------------");
-            console.log(selected);
-
-            // console.log("------- User id ----------------");
-            console.log(currentUserId);
-
             var tocreate = [];
             var todelete = [];
 
             this.state.allrolesraw.map(function (val) {
 
                 console.log("------- VALUE  ----------------");
-                console.log(val.id);
+                //console.log(val.id);
                 let roleId = val.id;
                 if (initials.includes(roleId) && !selected.includes(roleId)) {
-                    console.log("------- Deleting .....  ----------------");
-
-                    console.log("--------- REALTIONS -----------------");
-
                     let idToDelete = realtions.map(function (val) {
-                        console.log(JSON.stringify(val));
+                        //console.log(JSON.stringify(val));
                         let definedrelation = JSON.parse(JSON.stringify(val));
                         if (definedrelation.user_id == currentUserId && definedrelation.role_id == roleId) {
-                            //console.log("ID : " + definedrelation.id);
-                            //console.log(roleId);
                             todelete.push(roleId);
                             deleteUserRole(definedrelation.id);
                             return definedrelation.id;
@@ -184,25 +163,13 @@ export class RoleListBox extends React.Component {
                     });
 
                 } else if (!initials.includes(roleId) && selected.includes(roleId)) {
-                    console.log("------- Creating .....  ----------------");
-
                     tocreate.push(roleId);
                     //only possible to post one entry
-                    let payload = JSON.stringify({role_id: roleId, user_id: currentUserId});
-                    console.log(payload);
                     createUserRole({"role_id": roleId, "user_id": currentUserId});
                 }
             });
-            const notify = useNotify();
-
-            notify('Roles saved!!!');
-
-            //this.forceUpdate();
-            // window.location.reload(false);
-
         }
     }
-
 
     onSave = (selected) => {
         alert(this.state.selected)
@@ -210,22 +177,31 @@ export class RoleListBox extends React.Component {
 
 
     onChange = (selected) => {
+        alert(selected)
         this.setState({
-            selected
+            selected: selected,
+            userroles: selected
         });
+        //UserRightBox.getDerivedStateFromProps();
     };
 
+    changingRightsChild(text) {
+    }
+
     render() {
-        if (this.state.allroles.length && this.state.allroles.length != 0) {
+        console.log("************* RENDER ROLE LIST BOX ******************");
+        if (this.state.allroles && this.state.allroles.length > 0) {
             var fickdich = JSON.parse(this.state.allroles.replace(/id/g, "value").replace(/name/g, "label"));
             fickdich.map(function (val) {
                 delete val.created_at;
                 delete val.updated_at;
             })
             return (<div><DualListBox options={fickdich} selected={this.state.selected}
-                                                  onChange={this.onChange}/>
-                <button className="fwaves-effect waves-light btn" onClick={(event) => this.updateRoles(event)}>Save Roles
+                                      onChange={this.onChange}/>
+                <button className="fwaves-effect waves-light btn"  onChange={(e) => this.changingRightsChild(e.target.value)} onClick={(event) => this.updateRoles(event)}>Save
+                    Roles
                 </button>
+                <UserRightBox selected={this.state.selected} userid={this.props.user_id} id="deioma"/>
             </div>);
 
         }

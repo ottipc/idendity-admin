@@ -1,9 +1,8 @@
-import React from 'react';
+import React  from 'react';
 import DualListBox from 'react-dual-listbox';
 import 'react-dual-listbox/lib/react-dual-listbox.css';
 import dataProvider from '../api/dataProvider';
-
-
+import { useDataProvider, useNotify, useRedirect, Button } from 'react-admin';
 const options = [{
     value: 'one',
     label: 'Option One'
@@ -13,7 +12,6 @@ const options = [{
         label: 'Option Two'
     },
 ];
-
 
 export class RoleListBox extends React.Component {
 
@@ -35,7 +33,7 @@ export class RoleListBox extends React.Component {
             initialroles: [],
             relationobjects: []
         };
-         this.handleClick = this.updateRoles.bind(this);
+        this.handleClick = this.updateRoles.bind(this);
         //this.props.hurensohn = "was";
     }
 
@@ -74,8 +72,8 @@ export class RoleListBox extends React.Component {
 
                 this.setState({
                     selected: userroles,
-                    initialroles : userroles,
-                    relationobjects : relations
+                    initialroles: userroles,
+                    relationobjects: relations
                 })
             }).catch(err => {
             console.log(err);
@@ -100,7 +98,7 @@ export class RoleListBox extends React.Component {
             .then(response => {
                 //  console.log(JSON.stringify(response.data));
                 this.setState({
-                    allrolesraw : response.data,
+                    allrolesraw: response.data,
                     allroles: JSON.stringify(response.data)
                 })
             }).catch(err => {
@@ -109,8 +107,8 @@ export class RoleListBox extends React.Component {
     }
 
 
-    updateRoles(e) {
-
+    updateRoles(event) {
+        event.preventDefault();
         function createUserRole(payload) {
             dataProvider
                 .create('user_role', {data: payload})
@@ -151,13 +149,13 @@ export class RoleListBox extends React.Component {
             let selected = this.state.selected;
             let currentUserId = this.props.record.id;
             let realtions = this.state.relationobjects;
-          //  console.log("------- Initials ----------------");
+            //  console.log("------- Initials ----------------");
             console.log(initials);
 
-           // console.log("------- Selected ----------------");
+            // console.log("------- Selected ----------------");
             console.log(selected);
 
-           // console.log("------- User id ----------------");
+            // console.log("------- User id ----------------");
             console.log(currentUserId);
 
             var tocreate = [];
@@ -168,15 +166,15 @@ export class RoleListBox extends React.Component {
                 console.log("------- VALUE  ----------------");
                 console.log(val.id);
                 let roleId = val.id;
-                if(initials.includes(roleId) && !selected.includes(roleId)){
+                if (initials.includes(roleId) && !selected.includes(roleId)) {
                     console.log("------- Deleting .....  ----------------");
 
                     console.log("--------- REALTIONS -----------------");
 
                     let idToDelete = realtions.map(function (val) {
                         console.log(JSON.stringify(val));
-                        let definedrelation  = JSON.parse(JSON.stringify(val));
-                        if(definedrelation.user_id == currentUserId && definedrelation.role_id ==roleId){
+                        let definedrelation = JSON.parse(JSON.stringify(val));
+                        if (definedrelation.user_id == currentUserId && definedrelation.role_id == roleId) {
                             //console.log("ID : " + definedrelation.id);
                             //console.log(roleId);
                             todelete.push(roleId);
@@ -185,20 +183,22 @@ export class RoleListBox extends React.Component {
                         }
                     });
 
-                }
-                else if(!initials.includes(roleId) && selected.includes(roleId)){
+                } else if (!initials.includes(roleId) && selected.includes(roleId)) {
                     console.log("------- Creating .....  ----------------");
 
                     tocreate.push(roleId);
                     //only possible to post one entry
-                    let payload = JSON.stringify({role_id : roleId , user_id : currentUserId});
+                    let payload = JSON.stringify({role_id: roleId, user_id: currentUserId});
                     console.log(payload);
-                    createUserRole({"role_id" : roleId , "user_id" : currentUserId});
+                    createUserRole({"role_id": roleId, "user_id": currentUserId});
                 }
             });
+            const notify = useNotify();
 
-          //console.log(payload);
+            notify('Roles saved!!!');
 
+            //this.forceUpdate();
+            // window.location.reload(false);
 
         }
     }
@@ -222,8 +222,10 @@ export class RoleListBox extends React.Component {
                 delete val.created_at;
                 delete val.updated_at;
             })
-            return (<div><DualListBox options={fickdich} selected={this.state.selected} onChange={this.onChange}/>
-                <button onClick={this.updateRoles.bind(this)}></button>
+            return (<div><DualListBox options={fickdich} selected={this.state.selected}
+                                                  onChange={this.onChange}/>
+                <button className="fwaves-effect waves-light btn" onClick={(event) => this.updateRoles(event)}>Save Roles
+                </button>
             </div>);
 
         }

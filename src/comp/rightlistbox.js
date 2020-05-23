@@ -205,7 +205,7 @@ export class RightListBox extends React.Component {
                 delete val.updated_at;
             })
             return (<div><DualListBox options={fickdich} selected={this.state.selected} onChange={this.onChange}/>
-                <button onClick={this.updateRights.bind(this)}></button>
+                <button className="waves-effect waves-light btn" onClick={this.updateRights.bind(this)}>Save rights</button>
             </div>);
 
         }

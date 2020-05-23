@@ -1,21 +1,19 @@
-import React from 'react';
+import React,{ Fragment }  from 'react';
+import RightQuickCreateButton from "./comp/RightQuickCreateButton";
 import {
+    ChipField,
     Create,
+    Datagrid,
     DateField,
     Edit,
-    SimpleForm,
-    ReferenceInput,
-    SelectInput,
-    TextInput,
-    List,
-    Datagrid,
-    TextField,
-    ReferenceField,
     EditButton,
+    List,
+    ReferenceField,
     ReferenceManyField,
+    SimpleForm,
     SingleFieldList,
-    ChipField,
-    BooleanInput
+    TextField,
+    TextInput
 } from 'react-admin';
 import {RightListBox} from "./comp/rightlistbox";
 
@@ -29,7 +27,9 @@ export const RoleCreate = props => (
 
 );
 export const RoleList = (props) => (
+    <Fragment>
     <List {...props}>
+
         <Datagrid>
             <TextField source="id" />
             <TextField source="name" />
@@ -42,11 +42,12 @@ export const RoleList = (props) => (
                         <ChipField source="name" />
                     </ReferenceField>
                 </SingleFieldList>
-
             </ReferenceManyField>
+            <RightQuickCreateButton />
             <EditButton />
-        </Datagrid>
+            </Datagrid>
     </List>
+    </Fragment>
 );
 
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import {Admin, Resource, ListGuesser, EditGuesser, ShowGuesser} from 'react-admin';
 import dataProvider from './api/dataProvider';
-import {RoleCreate, RoleEdit} from './roles';
+import {RoleList, RoleCreate, RoleEdit} from './roles';
 import {UserCreate, UserEdit, UserList} from './user';
 import {RightCreate, RightEdit} from './right';
 import { createMuiTheme } from '@material-ui/core/styles';
@@ -34,7 +34,7 @@ const theme = createMuiTheme({
 const App = () => (
     <Admin theme={theme} dataProvider={dataProvider}>
         <Resource  name="user" list={UserList} create={UserCreate} edit={UserEdit} show={ShowGuesser}/>
-        <Resource name="role" list={ListGuesser} create={RoleCreate} edit={RoleEdit}/>
+        <Resource name="role" list={RoleList} create={RoleCreate} edit={RoleEdit}/>
         <Resource name="right" list={ListGuesser} create={RoleCreate}/>
         <Resource name="user_role"/>
         <Resource name="role_right"/>

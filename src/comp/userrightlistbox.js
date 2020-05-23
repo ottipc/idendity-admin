@@ -14,6 +14,7 @@ export class UserRightBox extends React.Component {
         this.state = {
             userroles: [],
             roleRights: [],
+            rightObjects: []
         };
         this.getUserRolesToState = this.getUserRolesToState.bind(this);
         //this.props.hurensohn = "was";
@@ -35,10 +36,9 @@ export class UserRightBox extends React.Component {
     // send HTTP request to get User Roles
     // save UserRoles to the state
     getUserRolesToState() {
-        console.log("------- RIGHT BOX USer ROLE ----------------")
-        console.log("RECORD : " + this.props.record.id);
+        //console.log("------- RIGHT BOX USer ROLE ----------------")
+        //console.log("RECORD : " + this.props.record.id);
         var self = this;
-        let tempuserroles = [];
         dataProvider.getList('user_role', {
             pagination: {
                 page: 1,
@@ -52,105 +52,53 @@ export class UserRightBox extends React.Component {
                 user_id: this.props.record.id
             },
         }).then(function (userRoleResponse) {
-            console.log("userRoleResponse")
-            console.log(userRoleResponse)
             return userRoleResponse; // pass the data as promise to next then block
         }).then(function (userroleresponse) {
-
-            console.log("------- FUCK THE DATA ----------------")
-            console.log(userroleresponse.data)
-            let tempuserrights = [];
-            let roleids = new Array();
+            let roleIds = new Array();
             userroleresponse.data.map(function (userRole) {
-                console.log("------- PUSHING ----------------")
-                console.log(userRole.role_id)
-                roleids.unshift(userRole.role_id);
+                roleIds.unshift(userRole.role_id);
             }); // make a 2nd request and return a promise
-            console.log("------- ROLEIDS ----------------")
-            console.log(roleids);
-            let jsonsthurensohn = [];
-            jsonsthurensohn['role_id'] = roleids;
-            console.log(jsonsthurensohn);
-            console.log(jsonsthurensohn.toJSON);
-
-            dataProvider.getList('role_right', {
-                pagination: {
-                    page: 1,
-                    perPage: 50
-                },
-                sort: {
-                    field: 'id',
-                    order: 'ASC'
-                },
-                filter: {role_id : JSON.stringify(roleids)},
+            dataProvider.getManyOr('role_right', {
+                role_id: roleIds
             }).then(function (roleRightResponse) {
-                console.log("------- RoleRightResponse ----------------")
-                console.log(roleRightResponse)
-                if (roleRightResponse.data.length > 0) {
-                    tempuserrights.push(roleRightResponse.data[0]);
-                    self.state.roleRights = tempuserrights;
-                    console.log(self.state.roleRights)
-                }
-                return tempuserrights; // pass the data as promise to next then block
+                self.setState({
+                        roleRights: roleRightResponse.data
+                })
+                return roleRightResponse.data; // pass the data as promise to next then block
+            }).then(function (userRightResponse) {
+                let ids =[];
+                userRightResponse.map(function (roleRight) {
+                    ids.unshift(roleRight.right_id);
+                });
+
+                dataProvider.getManyOr('right', {
+                    id: ids
+                }).then(function (rightResponse) {
+                    console.log("RIGHT RESPONSEEEEEEEE");
+                    console.log(rightResponse);
+                        self.setState({
+                            rightObjects: rightResponse.data
+                        })
+                })
             }).catch(err => {
                 console.log(err);
             });
         })
     }
-
-    // send HTTP request to get Role Rights
-    // save roleRights to the state
-    getRoleRightsToState() {
-        console.log("------- RIGHT BOX  ROLE RIGHTS ----------------")
-        let userrolesforrights = this.state.userroles;
-        console.log(userrolesforrights);
-
-        userrolesforrights.map(function (userRole) {
-            let roleRights = [];
-            let relations = [];
-            dataProvider.getList('role_right', {
-                pagination: {
-                    page: 1,
-                    perPage: 50
-                },
-                sort: {
-                    field: 'id',
-                    order: 'ASC'
-                },
-                filter: {
-                    role_id: userRole.role_id
-                },
-            }).then(response => response)
-                .then(response => {
-                    response.data.map(function (val) {
-                        roleRights.push(val.right_id);
-                    });
-                    console.log(roleRights);
-
-                    this.setState({
-                        roleRights: roleRights
-                    })
-                }).catch(err => {
-                console.log(err);
-            });
-        });
+    fuckingUpdate(){
+        this.forceUpdate();
     }
 
-
     render() {
-
-        console.log("-------------------------Rendering---------------");
         if (this) {
-            console.log("WAS PASIERT HIER");
-            console.log(this.state.roleRights);
-            const elements = this.state.roleRights;
+            const rights = this.state.rightObjects;
             return (
                 <ul>
-                    {elements.map((value, index) => {
+                    {rights.map((value, index) => {
                         return <Chip
                             key={index}
                             className="foeztchen"
-                            label={value}
+                            label={value.name}
                         />
                     })}
                 </ul>
@@ -159,5 +107,4 @@ export class UserRightBox extends React.Component {
         return null;
     }
 }
-
 export default UserRightBox;

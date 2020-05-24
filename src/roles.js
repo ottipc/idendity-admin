@@ -4,7 +4,9 @@ import {
     ChipField,
     Create,
     Datagrid,
+    NumberField,
     DateField,
+    NumberInput,
     Edit,
     EditButton,
     List,
@@ -22,6 +24,8 @@ export const RoleCreate = props => (
     <Create {...props}>
         <SimpleForm>
             <TextInput source="name" />
+            <TextInput label="Kategorie" source="category"/>
+            <NumberInput source="priority" />
         </SimpleForm>
     </Create>
 
@@ -33,7 +37,8 @@ export const RoleList = (props) => (
         <Datagrid>
             <TextField source="id" />
             <TextField source="name" />
-            <TextField source="activated" type="boolean" />
+            <TextField source="category"/>
+            <NumberField source="priority" />
             <DateField source="created_at" />
             <DateField source="updated_at" />
             <ReferenceManyField label="Rights" reference="role_right" target="right_id">
@@ -43,7 +48,6 @@ export const RoleList = (props) => (
                     </ReferenceField>
                 </SingleFieldList>
             </ReferenceManyField>
-            <RightQuickCreateButton />
             <EditButton />
             </Datagrid>
     </List>

@@ -6,6 +6,7 @@ import {RightList} from './right';
 import {UserCreate, UserEdit, UserList} from './user';
 import {RightCreate, RightEdit} from './right';
 import { createMuiTheme } from '@material-ui/core/styles';
+import MapChart from "./comp/MapChart";
 
 const theme = createMuiTheme({
   palette: {
@@ -36,10 +37,12 @@ const App = () => (
     <Admin theme={theme} dataProvider={dataProvider}>
         <Resource  name="user" list={UserList} create={UserCreate} edit={UserEdit} show={ShowGuesser}/>
         <Resource name="role" list={RoleList} create={RoleCreate} edit={RoleEdit}/>
-        <Resource name="right" list={ListGuesser} create={RightCreate} edit={EditGuesser} show={ShowGuesser}/>
+        <Resource name="right" list={RightList} create={RightCreate} edit={EditGuesser} show={ShowGuesser}/>
         <Resource name="user_role"/>
         <Resource name="role_right"/>
+
     </Admin>
+
 );
 
 

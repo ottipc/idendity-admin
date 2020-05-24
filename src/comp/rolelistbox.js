@@ -4,6 +4,43 @@ import 'react-dual-listbox/lib/react-dual-listbox.css';
 import dataProvider from '../api/dataProvider';
 import {UserRightBox} from "./userrightlistbox";
 import {SimpleForm} from "react-admin";
+import apiService from '../api/apiService';
+import ExpansionPanel from "@material-ui/core/ExpansionPanel";
+import ExpansionPanelSummary from "@material-ui/core/ExpansionPanelSummary";
+import Typography from "@material-ui/core/Typography";
+import ExpansionPanelDetails from "@material-ui/core/ExpansionPanelDetails";
+import Box from "@material-ui/core/Box";
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import {makeStyles} from "@material-ui/core/styles";
+import {NotificationContainer, NotificationManager} from 'react-notifications';
+import { createNotification } from './Notification';
+//const displayNotification = createNotification(type, title, message);
+import Tooltip from "@material-ui/core/Tooltip";
+
+const useStyles = makeStyles((theme) => ({
+    list: {
+        width: 250,
+    },
+    fullList: {
+        width: 'auto',
+    },
+    root: {
+        //flexGrow: 1,
+    }, heading: {
+        fontSize: theme.typography.pxToRem(15),
+        flexBasis: '33.33%',
+        flexShrink: 0,
+    },
+    secondaryHeading: {
+        fontSize: theme.typography.pxToRem(15),
+        color: theme.palette.text.secondary,
+    },
+    paper: {
+        padding: theme.spacing(2),
+        textAlign: 'center',
+        color: theme.palette.text.secondary,
+    },
+}));
 
 const options = [{
     value: 'one',
@@ -52,7 +89,9 @@ export class RoleListBox extends React.Component {
     getUserRolesToState() {
         let userroles = [];
         let relations = [];
-        this.fetchRoleListForUser().then(response => response)
+        console.log("------------------NUTTEN-------------------------------------")
+        console.log(this.props)
+        apiService.fetchRoleListForUser(this.props.user_id).then(response => response)
             .then(response => {
                 response.data.map(function (val) {
                     userroles.push(val.role_id);
@@ -68,26 +107,10 @@ export class RoleListBox extends React.Component {
         });
     }
 
-    fetchRoleListForUser() {
-        return dataProvider.getList('user_role', {
-            pagination: {
-                page: 1,
-                perPage: 50
-            },
-            sort: {
-                field: 'id',
-                order: 'ASC'
-            },
-            filter: {
-                user_id: this.props.record.id
-            },
-        });
-    }
-
-// send HTTP request to get All Roles
+    // send HTTP request to get All Roles
     // save AllRoles to the state
     setAllRolesToState() {
-        this.fetchAllRoleObjects().then(response => {
+        apiService.fetchAllRoleObjects().then(response => {
                 this.setState({
                     allrolesraw: response.data,
                     allroles: JSON.stringify(response.data)
@@ -97,54 +120,15 @@ export class RoleListBox extends React.Component {
         });
     }
 
-
-    fetchAllRoleObjects() {
-        return dataProvider.getList('role', {
-            pagination: {
-                page: 1,
-                perPage: 20
-            },
-            sort: {
-                field: 'name',
-                order: 'ASC'
-            },
-            filter: {},
-        })
-    }
-
     updateRoles(event) {
         event.preventDefault();
-        function createUserRole(payload) {
-            dataProvider
-                .create('user_role', {data: payload})
-                .then(response => {
-                    // success side effects go here
-                    //console.log(response);
-                })
-                .catch(error => {
-                    console.log(error);
-                });
-        }
-
-        function deleteUserRole(relationId) {
-            dataProvider
-                .delete('user_role', {id: relationId})
-                .then(response => {
-                    // success side effects go here
-                    //console.log(response);
-                })
-                .catch(error => {
-                    console.log(error);
-                });
-        }
-
         if (this) {
             let initials = this.state.initialroles;
             let selected = this.state.selected;
-            let currentUserId = this.props.record.id;
+            let currentUserId = this.props.user_id;
             let realtions = this.state.relationobjects;
-            var tocreate = [];
-            var todelete = [];
+            let toCreate = [];
+            let toDelete = [];
 
             this.state.allrolesraw.map(function (val) {
 
@@ -154,30 +138,32 @@ export class RoleListBox extends React.Component {
                 if (initials.includes(roleId) && !selected.includes(roleId)) {
                     let idToDelete = realtions.map(function (val) {
                         //console.log(JSON.stringify(val));
-                        let definedrelation = JSON.parse(JSON.stringify(val));
-                        if (definedrelation.user_id == currentUserId && definedrelation.role_id == roleId) {
-                            todelete.push(roleId);
-                            deleteUserRole(definedrelation.id);
-                            return definedrelation.id;
+                        let definedRelation = JSON.parse(JSON.stringify(val));
+                        if (definedRelation.user_id == currentUserId && definedRelation.role_id == roleId) {
+                            toDelete.push(roleId);
+                            apiService.deleteUserRole(definedRelation.id);
+                            return definedRelation.id;
                         }
                     });
 
                 } else if (!initials.includes(roleId) && selected.includes(roleId)) {
-                    tocreate.push(roleId);
+                    toCreate.push(roleId);
                     //only possible to post one entry
-                    createUserRole({"role_id": roleId, "user_id": currentUserId});
+                    apiService.createUserRole({"role_id": roleId, "user_id": currentUserId});
                 }
             });
         }
+        createNotification("success", "Role saved","Role for User persisted");
     }
 
     onSave = (selected) => {
+        alert("Hello")
         alert(this.state.selected)
     };
 
 
     onChange = (selected) => {
-        alert(selected)
+        //alert(selected)
         this.setState({
             selected: selected,
             userroles: selected
@@ -191,22 +177,37 @@ export class RoleListBox extends React.Component {
     render() {
         console.log("************* RENDER ROLE LIST BOX ******************");
         if (this.state.allroles && this.state.allroles.length > 0) {
-            var fickdich = JSON.parse(this.state.allroles.replace(/id/g, "value").replace(/name/g, "label"));
-            fickdich.map(function (val) {
+            var parsedJsonObject = JSON.parse(this.state.allroles.replace(/id/g, "value").replace(/name/g, "label"));
+            parsedJsonObject.map(function (val) {
                 delete val.created_at;
                 delete val.updated_at;
             })
-            return (<div><DualListBox options={fickdich} selected={this.state.selected}
+            return (<div><DualListBox options={parsedJsonObject} selected={this.state.selected}
                                       onChange={this.onChange}/>
-                <button className="fwaves-effect waves-light btn"  onChange={(e) => this.changingRightsChild(e.target.value)} onClick={(event) => this.updateRoles(event)}>Save
+                <button className="MuiButtonBase-root MuiButton-root MuiButton-contained RaSaveButton-button-514 MuiButton-containedPrimary"  onChange={(e) => this.changingRightsChild(e.target.value)} onClick={(event) => this.updateRoles(event)}>Save
                     Roles
                 </button>
-                <UserRightBox selected={this.state.selected} userid={this.props.user_id} id="deioma"/>
+                <NotificationContainer/>
+                <ExpansionPanel defaultExpanded={true}>
+                    <ExpansionPanelSummary
+                        expandIcon={<ExpandMoreIcon/>}
+                        aria-controls="panel1a-content"
+                        id="panel1a-header"
+                        expanded={true}
+                    >
+                        <Typography className={useStyles.heading}>User Rechte</Typography>
+                    </ExpansionPanelSummary>
+                    <ExpansionPanelDetails>
+                        <UserRightBox selected={this.state.selected} userid={this.props.user_id} id="deioma"/>
+                    </ExpansionPanelDetails>
+                </ExpansionPanel>
+
+
+
             </div>);
 
         }
         return (<div><DualListBox options={options} selected={this.state.selected}/></div>);
     }
 }
-
 export default RoleListBox;

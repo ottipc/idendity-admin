@@ -2,10 +2,9 @@ import React from 'react';
 import DualListBox from 'react-dual-listbox';
 import 'react-dual-listbox/lib/react-dual-listbox.css';
 import dataProvider from '../api/dataProvider';
-
+import apiService from '../api/apiService';
 
 export class RightListBox extends React.Component {
-
     constructor(props) {
         super(props);
         // Don't call this.setState() here!
@@ -35,19 +34,7 @@ export class RightListBox extends React.Component {
         console.log("------- Set Role Rights ----------------")
         let roleRights = [];
         let relations = [];
-        dataProvider.getList('role_right', {
-            pagination: {
-                page: 1,
-                perPage: 50
-            },
-            sort: {
-                field: 'id',
-                order: 'ASC'
-            },
-            filter: {
-                role_id: this.props.record.id
-            },
-        }).then(response => response)
+        this.fetchRightIdsForRole().then(response => response)
             .then(response => {
                 response.data.map(function (val) {
                     roleRights.push(val.right_id);
@@ -64,21 +51,27 @@ export class RightListBox extends React.Component {
         });
     }
 
-    // send HTTP request to get All Rights
+    fetchRightIdsForRole() {
+        return dataProvider.getList('role_right', {
+            pagination: {
+                page: 1,
+                perPage: 50
+            },
+            sort: {
+                field: 'id',
+                order: 'ASC'
+            },
+            filter: {
+                role_id: this.props.record.id
+            },
+        });
+    }
+
+// send HTTP request to get All Rights
     // save AllRights to the state
     setAllRightsToState() {
         console.log("------- Set All Rights ----------------")
-        dataProvider.getList('right', {
-            pagination: {
-                page: 1,
-                perPage: 20
-            },
-            sort: {
-                field: 'name',
-                order: 'ASC'
-            },
-            filter: {},
-        }).then(response => response)
+        apiService.fetchAllRights().then(response => response)
             .then(response => {
                 //  console.log(JSON.stringify(response.data));
                 this.setState({
@@ -93,6 +86,7 @@ export class RightListBox extends React.Component {
 
     updateRights(e) {
 
+        e.preventDefault();
         function createRoleRight(payload) {
             dataProvider
                 .create('role_right', {data: payload})

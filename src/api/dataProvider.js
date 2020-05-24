@@ -35,15 +35,8 @@ const myDataProvider = {
             }
         }
         let queryids = queryValues.join(",");
-        let queerystring = "";
-        console.log("QUERI IDSSSS");
-        console.log(queryids);
+        let queerystring = (!queryids) ? "id=eq.-1" : "or=(" + queryids + ")";
 
-        if(!queryids)
-            {queerystring="id=eq.-1"}
-        else{
-            queerystring = "or=(" + queryids + ")"
-        }
         let url = "http://localhost:3030" + "/" + resource + "?" + queerystring;
         return httpClient(url).then(function (_a) {
             var json = _a.json;
